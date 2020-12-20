@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 
 	"github.com/BurntSushi/toml"
-
 	"github.com/unistack-org/micro/v3/codec"
 )
 
@@ -45,11 +44,11 @@ func (c *tomlCodec) Unmarshal(b []byte, v interface{}) error {
 	return toml.Unmarshal(b, v)
 }
 
-func (c *tomlCodec) ReadHeader(conn io.ReadWriter, m *codec.Message, t codec.MessageType) error {
+func (c *tomlCodec) ReadHeader(conn io.Reader, m *codec.Message, t codec.MessageType) error {
 	return nil
 }
 
-func (c *tomlCodec) ReadBody(conn io.ReadWriter, b interface{}) error {
+func (c *tomlCodec) ReadBody(conn io.Reader, b interface{}) error {
 	switch m := b.(type) {
 	case nil:
 		return nil
@@ -70,7 +69,7 @@ func (c *tomlCodec) ReadBody(conn io.ReadWriter, b interface{}) error {
 	return toml.Unmarshal(buf, b)
 }
 
-func (c *tomlCodec) Write(conn io.ReadWriter, m *codec.Message, b interface{}) error {
+func (c *tomlCodec) Write(conn io.Writer, m *codec.Message, b interface{}) error {
 	switch m := b.(type) {
 	case nil:
 		return nil
