@@ -30,7 +30,7 @@ func (c *tomlCodec) Marshal(b interface{}) ([]byte, error) {
 }
 
 func (c *tomlCodec) Unmarshal(b []byte, v interface{}) error {
-	if b == nil {
+	if len(b) == 0 {
 		return nil
 	}
 	switch m := v.(type) {
@@ -56,6 +56,8 @@ func (c *tomlCodec) ReadBody(conn io.Reader, b interface{}) error {
 		buf, err := ioutil.ReadAll(conn)
 		if err != nil {
 			return err
+		} else if len(buf) {
+			return nil
 		}
 		m.Data = buf
 		return nil
@@ -64,7 +66,7 @@ func (c *tomlCodec) ReadBody(conn io.Reader, b interface{}) error {
 	buf, err := ioutil.ReadAll(conn)
 	if err != nil {
 		return err
-	} else if buf == nil {
+	} else if len(buf) == 0 {
 		return nil
 	}
 
