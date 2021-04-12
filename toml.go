@@ -64,6 +64,8 @@ func (c *tomlCodec) ReadBody(conn io.Reader, b interface{}) error {
 	buf, err := ioutil.ReadAll(conn)
 	if err != nil {
 		return err
+	} else if buf == nil {
+		return nil
 	}
 
 	return toml.Unmarshal(buf, b)
