@@ -56,7 +56,7 @@ func (c *tomlCodec) ReadBody(conn io.Reader, b interface{}) error {
 		buf, err := ioutil.ReadAll(conn)
 		if err != nil {
 			return err
-		} else if len(buf) {
+		} else if len(buf) == 0 {
 			return nil
 		}
 		m.Data = buf
