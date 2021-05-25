@@ -4,16 +4,20 @@ package toml
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 
 	"github.com/BurntSushi/toml"
 	"github.com/unistack-org/micro/v3/codec"
+	rutil "github.com/unistack-org/micro/v3/util/reflect"
 )
 
 type tomlCodec struct{}
 
-func (c *tomlCodec) Marshal(b interface{}) ([]byte, error) {
-	switch m := b.(type) {
+const (
+	flattenTag = "flatten"
+)
+
+func (c *tomlCodec) Marshal(v interface{}) ([]byte, error) {
+	switch m := v.(type) {
 	case nil:
 		return nil, nil
 	case *codec.Frame:
@@ -22,7 +26,12 @@ func (c *tomlCodec) Marshal(b interface{}) ([]byte, error) {
 
 	buf := bytes.NewBuffer(nil)
 	defer buf.Reset()
-	err := toml.NewEncoder(buf).Encode(b)
+
+	if nv, nerr := rutil.StructFieldByTag(v, codec.DefaultTagName, flattenTag); nerr == nil {
+		v = nv
+	}
+
+	err := toml.NewEncoder(buf).Encode(v)
 	if err != nil {
 		return nil, err
 	}
@@ -30,15 +39,17 @@ func (c *tomlCodec) Marshal(b interface{}) ([]byte, error) {
 }
 
 func (c *tomlCodec) Unmarshal(b []byte, v interface{}) error {
-	if len(b) == 0 {
+	if len(b) == 0 || v == nil {
 		return nil
 	}
-	switch m := v.(type) {
-	case nil:
-		return nil
-	case *codec.Frame:
+
+	if m, ok := v.(*codec.Frame); ok {
 		m.Data = b
 		return nil
+	}
+
+	if nv, nerr := rutil.StructFieldByTag(v, codec.DefaultTagName, flattenTag); nerr == nil {
+		v = nv
 	}
 
 	return toml.Unmarshal(b, v)
@@ -48,41 +59,33 @@ func (c *tomlCodec) ReadHeader(conn io.Reader, m *codec.Message, t codec.Message
 	return nil
 }
 
-func (c *tomlCodec) ReadBody(conn io.Reader, b interface{}) error {
-	switch m := b.(type) {
-	case nil:
-		return nil
-	case *codec.Frame:
-		buf, err := ioutil.ReadAll(conn)
-		if err != nil {
-			return err
-		} else if len(buf) == 0 {
-			return nil
-		}
-		m.Data = buf
+func (c *tomlCodec) ReadBody(conn io.Reader, v interface{}) error {
+	if v == nil {
 		return nil
 	}
 
-	buf, err := ioutil.ReadAll(conn)
+	buf, err := io.ReadAll(conn)
 	if err != nil {
 		return err
 	} else if len(buf) == 0 {
 		return nil
 	}
-
-	return toml.Unmarshal(buf, b)
+	return c.Unmarshal(buf, v)
 }
 
-func (c *tomlCodec) Write(conn io.Writer, m *codec.Message, b interface{}) error {
-	switch m := b.(type) {
-	case nil:
+func (c *tomlCodec) Write(conn io.Writer, m *codec.Message, v interface{}) error {
+	if v == nil {
 		return nil
-	case *codec.Frame:
-		_, err := conn.Write(m.Data)
+	}
+	buf, err := c.Marshal(v)
+	if err != nil {
 		return err
+	} else if len(buf) == 0 {
+		return codec.ErrInvalidMessage
 	}
 
-	return toml.NewEncoder(conn).Encode(b)
+	_, err = conn.Write(buf)
+	return err
 }
 
 func (c *tomlCodec) String() string {
