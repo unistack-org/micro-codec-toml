@@ -10,49 +10,63 @@ import (
 	rutil "github.com/unistack-org/micro/v3/util/reflect"
 )
 
-type tomlCodec struct{}
+type tomlCodec struct {
+	opts codec.Options
+}
+
+var _ codec.Codec = &tomlCodec{}
 
 const (
 	flattenTag = "flatten"
 )
 
-func (c *tomlCodec) Marshal(v interface{}) ([]byte, error) {
-	switch m := v.(type) {
-	case nil:
+func (c *tomlCodec) Marshal(v interface{}, opts ...codec.Option) ([]byte, error) {
+	if v == nil {
 		return nil, nil
-	case *codec.Frame:
+	}
+
+	options := c.opts
+	for _, o := range opts {
+		o(&options)
+	}
+
+	if nv, nerr := rutil.StructFieldByTag(v, options.TagName, flattenTag); nerr == nil {
+		v = nv
+	}
+
+	if m, ok := v.(*codec.Frame); ok {
 		return m.Data, nil
 	}
 
 	buf := bytes.NewBuffer(nil)
-	defer buf.Reset()
-
-	if nv, nerr := rutil.StructFieldByTag(v, codec.DefaultTagName, flattenTag); nerr == nil {
-		v = nv
-	}
-
 	err := toml.NewEncoder(buf).Encode(v)
 	if err != nil {
 		return nil, err
 	}
+
 	return buf.Bytes(), nil
 }
 
-func (c *tomlCodec) Unmarshal(b []byte, v interface{}) error {
-	if len(b) == 0 || v == nil {
+func (c *tomlCodec) Unmarshal(d []byte, v interface{}, opts ...codec.Option) error {
+	if v == nil || len(d) == 0 {
 		return nil
 	}
 
-	if m, ok := v.(*codec.Frame); ok {
-		m.Data = b
-		return nil
+	options := c.opts
+	for _, o := range opts {
+		o(&options)
 	}
 
-	if nv, nerr := rutil.StructFieldByTag(v, codec.DefaultTagName, flattenTag); nerr == nil {
+	if nv, nerr := rutil.StructFieldByTag(v, options.TagName, flattenTag); nerr == nil {
 		v = nv
 	}
 
-	return toml.Unmarshal(b, v)
+	if m, ok := v.(*codec.Frame); ok {
+		m.Data = d
+		return nil
+	}
+
+	return toml.Unmarshal(d, v)
 }
 
 func (c *tomlCodec) ReadHeader(conn io.Reader, m *codec.Message, t codec.MessageType) error {
@@ -92,6 +106,6 @@ func (c *tomlCodec) String() string {
 	return "toml"
 }
 
-func NewCodec() codec.Codec {
-	return &tomlCodec{}
+func NewCodec(opts ...codec.Option) *tomlCodec {
+	return &tomlCodec{opts: codec.NewOptions(opts...)}
 }
