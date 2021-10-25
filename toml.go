@@ -1,5 +1,5 @@
 // Package toml provides a toml codec
-package toml
+package toml // import "go.unistack.org/micro-codec-toml/v3"
 
 import (
 	"bytes"
