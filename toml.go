@@ -6,8 +6,8 @@ import (
 	"io"
 
 	"github.com/BurntSushi/toml"
-	"github.com/unistack-org/micro/v3/codec"
-	rutil "github.com/unistack-org/micro/v3/util/reflect"
+	"go.unistack.org/micro/v3/codec"
+	rutil "go.unistack.org/micro/v3/util/reflect"
 )
 
 type tomlCodec struct {
