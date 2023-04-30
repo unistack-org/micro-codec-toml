@@ -1,14 +1,14 @@
 // Package toml provides a toml codec
-package toml // import "go.unistack.org/micro-codec-toml/v3"
+package toml // import "go.unistack.org/micro-codec-toml/v4"
 
 import (
 	"bytes"
 	"io"
 
 	"github.com/BurntSushi/toml"
-	pb "go.unistack.org/micro-proto/v3/codec"
-	"go.unistack.org/micro/v3/codec"
-	rutil "go.unistack.org/micro/v3/util/reflect"
+	pb "go.unistack.org/micro-proto/v4/codec"
+	"go.unistack.org/micro/v4/codec"
+	rutil "go.unistack.org/micro/v4/util/reflect"
 )
 
 type tomlCodec struct {
