@@ -3,7 +3,6 @@ package toml // import "go.unistack.org/micro-codec-toml/v3"
 
 import (
 	"bytes"
-	"io"
 
 	"github.com/BurntSushi/toml"
 	pb "go.unistack.org/micro-proto/v3/codec"
@@ -17,10 +16,6 @@ type tomlCodec struct {
 
 var _ codec.Codec = &tomlCodec{}
 
-const (
-	flattenTag = "flatten"
-)
-
 func (c *tomlCodec) Marshal(v interface{}, opts ...codec.Option) ([]byte, error) {
 	if v == nil {
 		return nil, nil
@@ -31,8 +26,10 @@ func (c *tomlCodec) Marshal(v interface{}, opts ...codec.Option) ([]byte, error)
 		o(&options)
 	}
 
-	if nv, nerr := rutil.StructFieldByTag(v, options.TagName, flattenTag); nerr == nil {
-		v = nv
+	if options.Flatten {
+		if nv, nerr := rutil.StructFieldByTag(v, options.TagName, "flatten"); nerr == nil {
+			v = nv
+		}
 	}
 
 	switch m := v.(type) {
@@ -61,8 +58,10 @@ func (c *tomlCodec) Unmarshal(d []byte, v interface{}, opts ...codec.Option) err
 		o(&options)
 	}
 
-	if nv, nerr := rutil.StructFieldByTag(v, options.TagName, flattenTag); nerr == nil {
-		v = nv
+	if options.Flatten {
+		if nv, nerr := rutil.StructFieldByTag(v, options.TagName, "flatten"); nerr == nil {
+			v = nv
+		}
 	}
 
 	switch m := v.(type) {
@@ -75,39 +74,6 @@ func (c *tomlCodec) Unmarshal(d []byte, v interface{}, opts ...codec.Option) err
 	}
 
 	return toml.Unmarshal(d, v)
-}
-
-func (c *tomlCodec) ReadHeader(conn io.Reader, m *codec.Message, t codec.MessageType) error {
-	return nil
-}
-
-func (c *tomlCodec) ReadBody(conn io.Reader, v interface{}) error {
-	if v == nil {
-		return nil
-	}
-
-	buf, err := io.ReadAll(conn)
-	if err != nil {
-		return err
-	} else if len(buf) == 0 {
-		return nil
-	}
-	return c.Unmarshal(buf, v)
-}
-
-func (c *tomlCodec) Write(conn io.Writer, m *codec.Message, v interface{}) error {
-	if v == nil {
-		return nil
-	}
-	buf, err := c.Marshal(v)
-	if err != nil {
-		return err
-	} else if len(buf) == 0 {
-		return codec.ErrInvalidMessage
-	}
-
-	_, err = conn.Write(buf)
-	return err
 }
 
 func (c *tomlCodec) String() string {
