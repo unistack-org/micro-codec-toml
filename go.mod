@@ -1,6 +1,8 @@
 module go.unistack.org/micro-codec-toml/v3
 
-go 1.19
+go 1.21
+
+toolchain go1.23.4
 
 require (
 	github.com/BurntSushi/toml v1.4.0
@@ -8,4 +10,7 @@ require (
 	go.unistack.org/micro/v3 v3.10.88
 )
 
-require google.golang.org/protobuf v1.34.2 // indirect
+require (
+	github.com/google/go-cmp v0.6.0 // indirect
+	google.golang.org/protobuf v1.35.2 // indirect
+)

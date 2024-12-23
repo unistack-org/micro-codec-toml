@@ -1,5 +1,5 @@
 // Package toml provides a toml codec
-package toml // import "go.unistack.org/micro-codec-toml/v3"
+package toml
 
 import (
 	"bytes"
@@ -37,6 +37,10 @@ func (c *tomlCodec) Marshal(v interface{}, opts ...codec.Option) ([]byte, error)
 		return m.Data, nil
 	case *pb.Frame:
 		return m.Data, nil
+	case codec.RawMessage:
+		return []byte(m), nil
+	case *codec.RawMessage:
+		return []byte(*m), nil
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -70,6 +74,12 @@ func (c *tomlCodec) Unmarshal(d []byte, v interface{}, opts ...codec.Option) err
 		return nil
 	case *pb.Frame:
 		m.Data = d
+		return nil
+	case *codec.RawMessage:
+		*m = append((*m)[0:0], d...)
+		return nil
+	case codec.RawMessage:
+		copy(m, d)
 		return nil
 	}
 
