@@ -2,7 +2,6 @@ module go.unistack.org/micro-codec-toml/v4
 
 go 1.22.0
 
-
 require (
 	github.com/BurntSushi/toml v1.4.0
 	go.unistack.org/micro-proto/v4 v4.1.0
